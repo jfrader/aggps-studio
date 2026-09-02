@@ -82,14 +82,16 @@ def _has_uvicorn() -> bool:
         return False
 
 
-def test_linux_desktop_forces_gtk_backend(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_linux_desktop_uses_native_gtk_backend(monkeypatch: pytest.MonkeyPatch) -> None:
     import desktop
 
     monkeypatch.setattr(desktop.sys, "platform", "linux")
-    monkeypatch.delenv("GDK_BACKEND", raising=False)
+    monkeypatch.setenv("GDK_BACKEND", "wayland")
+    monkeypatch.delenv("WEBKIT_DISABLE_DMABUF_RENDERER", raising=False)
 
     assert desktop._native_webview_gui() == "gtk"
-    assert desktop.os.environ["GDK_BACKEND"] == "x11"
+    assert desktop.os.environ["GDK_BACKEND"] == "wayland"
+    assert desktop.os.environ["WEBKIT_DISABLE_DMABUF_RENDERER"] == "1"
 
 
 @pytest.mark.skipif(not _has_uvicorn(), reason="uvicorn not available for server lifecycle test")

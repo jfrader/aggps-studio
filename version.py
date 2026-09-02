@@ -5,4 +5,4 @@ Importing this module has no heavy dependencies and works in PyInstaller bundles
 """
 from __future__ import annotations
 
-APP_VERSION = "0.4.2"
+APP_VERSION = "0.4.3"

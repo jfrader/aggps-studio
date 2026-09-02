@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.3
+
+### Fixed
+
+- Linux desktop windows now use the session's native GTK backend with WebKitGTK's DMA-BUF renderer disabled, preventing blank XWayland windows without restoring Wayland protocol failures.
+- Native dark-mode form controls now keep readable foreground and background contrast in WebKitGTK.
+
 ## 0.4.2
 
 ### Fixed
