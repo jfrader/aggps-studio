@@ -76,9 +76,33 @@ jobs:
           if (-not (Test-Path -LiteralPath $exe)) {
             throw "Packaged Windows executable not found: $exe"
           }
-          & $exe --gui-smoke-test
-          if ($LASTEXITCODE -ne 0) {
-            throw "Windows GUI smoke test failed with exit code $LASTEXITCODE"
+
+          $verifyDir = Join-Path $env:RUNNER_TEMP ("aggps-gui-smoke-" + [guid]::NewGuid().ToString("N"))
+          New-Item -ItemType Directory -Path $verifyDir | Out-Null
+          $successMarker = Join-Path $verifyDir ".aggps-gui-smoke-ok"
+          $errorMarker = Join-Path $verifyDir ".aggps-gui-smoke-error"
+          $env:AGGPS_DESKTOP_VERIFY_DIR = $verifyDir
+          try {
+            & $exe --gui-smoke-test
+            $exitCode = $LASTEXITCODE
+            if ($exitCode -ne 0) {
+              if (Test-Path -LiteralPath $errorMarker) {
+                $errorText = (Get-Content -LiteralPath $errorMarker -Raw).Trim()
+                Write-Host "Windows GUI smoke diagnostic: $errorText"
+              } else {
+                Write-Host "Windows GUI smoke diagnostic marker was not created."
+              }
+              throw "Windows GUI smoke test failed with exit code $exitCode"
+            }
+            if (-not (Test-Path -LiteralPath $successMarker)) {
+              throw "Windows GUI smoke test exited 0 without a success marker."
+            }
+            $successText = (Get-Content -LiteralPath $successMarker -Raw).Trim()
+            if ($successText -ne "OK") {
+              throw "Windows GUI smoke success marker was invalid: $successText"
+            }
+          } finally {
+            Remove-Item Env:\AGGPS_DESKTOP_VERIFY_DIR -ErrorAction SilentlyContinue
           }
 
       - name: Upload desktop artifact
