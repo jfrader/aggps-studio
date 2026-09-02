@@ -37,7 +37,7 @@ Os documentos para o operador aceitam `es`, `en` e `pt-BR`. Espanhol é o idioma
 
 ## Aplicativo desktop (Windows x64 / Linux x64)
 
-Baixe `aggps-studio-0.4.0-*.zip` (artefatos de CI ou release). Extraia a pasta onedir.
+Baixe `aggps-studio-0.4.1-*.zip` (artefatos de CI ou release). Extraia a pasta onedir.
 
 Execute o lançador GUI normal:
 
@@ -48,9 +48,17 @@ O lançador é `--windowed` (sem console). `--version` e `--smoke-test` funciona
 
 Linux requer bibliotecas de sistema WebKitGTK/GTK (o bundle são apenas arquivos portáveis de aplicação; não é totalmente estático):
 
+Ubuntu 24.04+ / Debian testing+:
+
 ```bash
 sudo apt-get update
 sudo apt-get install -y gir1.2-webkit2-4.1 libwebkit2gtk-4.1-0 gir1.2-gtk-3.0
+```
+
+Arch Linux:
+
+```bash
+sudo pacman -S --needed webkit2gtk-4.1 gtk3
 ```
 
 Windows: Edge WebView2 Evergreen normalmente está presente em sistemas Windows modernos. Se a GUI falhar com erro de webview, instale o Evergreen a partir da página oficial da Microsoft WebView2 (https://developer.microsoft.com/en-us/microsoft-edge/webview2/). O runtime não é incluído neste pacote.

@@ -39,7 +39,7 @@ Generated operator material supports `es`, `en`, and `pt-BR`. Spanish is the def
 
 ## Desktop app (Windows x64 / Linux x64)
 
-Download `aggps-studio-0.4.0-*.zip` (CI artifacts or release). Extract the onedir folder.
+Download `aggps-studio-0.4.1-*.zip` (CI artifacts or release). Extract the onedir folder.
 
 Run the normal GUI launcher:
 
@@ -50,9 +50,17 @@ The launcher is `--windowed` (no console). `--version` and `--smoke-test` work f
 
 Linux requires system WebKitGTK/GTK libraries (bundle is portable application files only; do not claim fully static):
 
+Ubuntu 24.04+ / Debian testing+:
+
 ```bash
 sudo apt-get update
 sudo apt-get install -y gir1.2-webkit2-4.1 libwebkit2gtk-4.1-0 gir1.2-gtk-3.0
+```
+
+Arch Linux:
+
+```bash
+sudo pacman -S --needed webkit2gtk-4.1 gtk3
 ```
 
 Windows: Edge WebView2 Evergreen is usually present on modern systems. If the GUI reports a webview error, download the Evergreen installer from the official Microsoft WebView2 page (https://developer.microsoft.com/en-us/microsoft-edge/webview2/). The runtime is not bundled inside this package.

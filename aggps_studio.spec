@@ -120,6 +120,13 @@ excludes = [
     "_tkinter",
     "IPython",
     "jupyter",
+    # Linux ships only the GTK backend; avoid accidental Qt fallback and bloat
+    # when a developer build environment also has Qt bindings installed.
+    "webview.platforms.qt",
+    "PyQt5",
+    "PyQt6",
+    "PySide2",
+    "PySide6",
 ]
 
 a = Analysis(
@@ -137,6 +144,11 @@ a = Analysis(
     cipher=block_cipher,
     noarchive=False,
 )
+
+# Keep the host GUI stack internally consistent. Bundling Ubuntu's GTK/GLib
+# libraries while loading WebKitGTK from another distro causes ABI failures.
+if sys.platform.startswith("linux"):
+    a.exclude_system_libraries()
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
