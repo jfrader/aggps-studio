@@ -352,9 +352,10 @@ def main() -> None:
 
     if args.gui_smoke_test:
         exit_code = _run_gui_smoke_test_with_diagnostics()
-        if exit_code:
-            sys.exit(exit_code)
-        return
+        sys.stdout.flush()
+        sys.stderr.flush()
+        # WebKitGTK can leave portal helper threads alive after the window closes.
+        os._exit(exit_code)
 
     try:
         _run_desktop()

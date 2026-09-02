@@ -94,6 +94,28 @@ def test_linux_desktop_uses_native_gtk_backend(monkeypatch: pytest.MonkeyPatch) 
     assert desktop.os.environ["WEBKIT_DISABLE_DMABUF_RENDERER"] == "1"
 
 
+def test_gui_smoke_forces_process_exit_after_cleanup(monkeypatch: pytest.MonkeyPatch) -> None:
+    import desktop
+
+    class ForcedExit(Exception):
+        pass
+
+    exit_codes: list[int] = []
+
+    def fake_exit(code: int) -> None:
+        exit_codes.append(code)
+        raise ForcedExit
+
+    monkeypatch.setattr(desktop.sys, "argv", ["desktop.py", "--gui-smoke-test"])
+    monkeypatch.setattr(desktop, "_run_gui_smoke_test_with_diagnostics", lambda: 0)
+    monkeypatch.setattr(desktop.os, "_exit", fake_exit)
+
+    with pytest.raises(ForcedExit):
+        desktop.main()
+
+    assert exit_codes == [0]
+
+
 @pytest.mark.skipif(not _has_uvicorn(), reason="uvicorn not available for server lifecycle test")
 def test_desktop_server_lifecycle(tmp_path: Path):
     """Uses the reusable DesktopServer context manager.
