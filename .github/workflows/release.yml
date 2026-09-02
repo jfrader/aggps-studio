@@ -83,8 +83,8 @@ jobs:
           $errorMarker = Join-Path $verifyDir ".aggps-gui-smoke-error"
           $env:AGGPS_DESKTOP_VERIFY_DIR = $verifyDir
           try {
-            & $exe --gui-smoke-test
-            $exitCode = $LASTEXITCODE
+            $process = Start-Process -FilePath $exe -ArgumentList "--gui-smoke-test" -Wait -PassThru
+            $exitCode = $process.ExitCode
             if ($exitCode -ne 0) {
               if (Test-Path -LiteralPath $errorMarker) {
                 $errorText = (Get-Content -LiteralPath $errorMarker -Raw).Trim()

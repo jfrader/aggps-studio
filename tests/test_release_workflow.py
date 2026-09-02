@@ -20,8 +20,8 @@ def test_windows_jobs_run_frozen_gui_smoke_with_diagnostic_markers(
     assert "$env:RUNNER_TEMP" in windows_smoke
     assert "New-Item -ItemType Directory -Path $verifyDir" in windows_smoke
     assert "$env:AGGPS_DESKTOP_VERIFY_DIR = $verifyDir" in windows_smoke
-    assert "& $exe --gui-smoke-test" in windows_smoke
-    assert "$exitCode = $LASTEXITCODE" in windows_smoke
+    assert 'Start-Process -FilePath $exe -ArgumentList "--gui-smoke-test" -Wait -PassThru' in windows_smoke
+    assert "$exitCode = $process.ExitCode" in windows_smoke
     assert ".aggps-gui-smoke-ok" in windows_smoke
     assert ".aggps-gui-smoke-error" in windows_smoke
     assert "Get-Content -LiteralPath $errorMarker -Raw" in windows_smoke
@@ -56,8 +56,8 @@ def test_tag_release_waits_for_verified_platform_bundles() -> None:
     assert "--gui-smoke-test" in workflow
     assert '"dist\\AgGPS Studio\\AgGPS Studio.exe"' in workflow
     assert "Test-Path -LiteralPath $exe" in workflow
-    assert "& $exe --gui-smoke-test" in workflow
-    assert "$exitCode = $LASTEXITCODE" in workflow
+    assert 'Start-Process -FilePath $exe -ArgumentList "--gui-smoke-test" -Wait -PassThru' in workflow
+    assert "$exitCode = $process.ExitCode" in workflow
     assert "$exitCode -ne 0" in workflow
     assert ".aggps-gui-smoke-ok" in workflow
     assert ".aggps-gui-smoke-error" in workflow
