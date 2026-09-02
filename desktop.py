@@ -195,8 +195,11 @@ def _handle_missing_webview(exc: Exception) -> None:
 
 
 def _native_webview_gui() -> str | None:
-    """Use the only Linux backend shipped and documented by this bundle."""
-    return "gtk" if sys.platform.startswith("linux") else None
+    """Use GTK over X11 on Linux to avoid cross-distro Wayland protocol failures."""
+    if sys.platform.startswith("linux"):
+        os.environ["GDK_BACKEND"] = "x11"
+        return "gtk"
+    return None
 
 
 def _run_smoke_test() -> None:

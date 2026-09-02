@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.2
+
+### Fixed
+
+- Linux desktop windows now use GTK over X11/XWayland to avoid Wayland protocol failures with portable bundles.
+
 ## 0.4.1
 
 ### Fixed

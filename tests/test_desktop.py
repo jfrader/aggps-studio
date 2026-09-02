@@ -86,8 +86,10 @@ def test_linux_desktop_forces_gtk_backend(monkeypatch: pytest.MonkeyPatch) -> No
     import desktop
 
     monkeypatch.setattr(desktop.sys, "platform", "linux")
+    monkeypatch.delenv("GDK_BACKEND", raising=False)
 
     assert desktop._native_webview_gui() == "gtk"
+    assert desktop.os.environ["GDK_BACKEND"] == "x11"
 
 
 @pytest.mark.skipif(not _has_uvicorn(), reason="uvicorn not available for server lifecycle test")
