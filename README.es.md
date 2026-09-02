@@ -37,7 +37,7 @@ Los documentos para el operador admiten `es`, `en` y `pt-BR`. Español es el idi
 
 ## Aplicación de escritorio (Windows x64 / Linux x64)
 
-Descargue `aggps-studio-0.4.1-*.zip` (artefactos de CI o release). Extraiga la carpeta onedir.
+Descargue `aggps-studio-0.4.2-*.zip` (artefactos de CI o release). Extraiga la carpeta onedir.
 
 Ejecute el lanzador GUI normal:
 
@@ -52,14 +52,16 @@ Ubuntu 24.04+ / Debian testing+:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y gir1.2-webkit2-4.1 libwebkit2gtk-4.1-0 gir1.2-gtk-3.0
+sudo apt-get install -y gir1.2-webkit2-4.1 libwebkit2gtk-4.1-0 gir1.2-gtk-3.0 xwayland
 ```
 
 Arch Linux:
 
 ```bash
-sudo pacman -S --needed webkit2gtk-4.1 gtk3
+sudo pacman -S --needed webkit2gtk-4.1 gtk3 xorg-xwayland
 ```
+
+El lanzador usa el backend X11 de GTK. Los escritorios Wayland requieren XWayland.
 
 Windows: Edge WebView2 Evergreen suele estar presente en sistemas Windows modernos. Si la GUI falla con error de webview, instale desde la página oficial de Microsoft WebView2 (https://developer.microsoft.com/en-us/microsoft-edge/webview2/). El runtime no viene incluido en este paquete.
 
