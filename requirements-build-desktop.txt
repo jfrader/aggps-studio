@@ -1,0 +1,8 @@
+# Build-only requirements for reproducible PyInstaller desktop bundles (Windows x64 + Linux x64).
+# Install with: python -m pip install -r requirements-build-desktop.txt
+# This pulls desktop runtime + pins PyInstaller for consistent onedir output.
+# Runtime zips produced do not contain Python source or customer data.
+PyInstaller==6.22.2
+pip-licenses==5.5.5
+pytest==9.1.1
+-r requirements-desktop.txt

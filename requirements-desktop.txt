@@ -1,0 +1,9 @@
+# Desktop runtime requirements (platform-correct extras for pywebview).
+# Linux pulls PyGObject etc via [gtk]; Windows uses bare (Edge).
+# Install with: pip install -r requirements-desktop.txt
+# (pulls server + desktop extras; one command for CI/build)
+-r requirements.txt
+platformdirs==4.3.6
+pywebview[gtk]==6.2.1 ; sys_platform == "linux"
+pywebview==6.2.1 ; sys_platform == "win32"
+pywebview==6.2.1 ; sys_platform != "linux" and sys_platform != "win32"

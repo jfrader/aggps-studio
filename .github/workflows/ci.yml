@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pytest -q
+
+  container:
+    runs-on: ubuntu-latest
+    env:
+      AGGPS_STUDIO_PASSWORD: ci-only-tractor-password
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose up --build --detach --wait
+      - run: curl --fail http://127.0.0.1:8765/healthz
+      - run: docker compose exec --no-TTY web python -c "from pathlib import Path; assert Path('/data/jobs').is_dir()"
+      - if: always()
+        run: docker compose down
+
+  # Desktop matrix: builds onedir + zip, verifies packaged exe (assertive markers/exit), tests, uploads.
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            plat: windows-x64
+          - os: ubuntu-latest
+            plat: linux-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install Linux desktop libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            build-essential \
+            at-spi2-core \
+            dbus-x11 \
+            pkg-config \
+            libcairo2-dev \
+            gobject-introspection \
+            libgirepository1.0-dev \
+            libgtk-3-dev \
+            libwebkit2gtk-4.1-dev \
+            xvfb
+
+      - name: Install desktop + build requirements (PyInstaller 6.22.2 pinned)
+        run: python -m pip install -r requirements-build-desktop.txt
+
+      - name: Build desktop bundle
+        run: python build_desktop.py
+
+      - name: Verify packaged bundle
+        run: python build_desktop.py --verify
+
+      - name: Run packaging verification tests
+        run: python -m pytest tests/test_packaging.py -q --tb=line
+
+      - name: Run Linux GUI smoke
+        if: runner.os == 'Linux'
+        run: |
+          dbus-run-session -- env -u WAYLAND_DISPLAY GDK_BACKEND=x11 xvfb-run --auto-servernum --server-args="-screen 0 1024x768x24" \
+            timeout --signal=TERM 20s \
+            "./dist/AgGPS Studio/AgGPS Studio" --gui-smoke-test
+
+      - name: Probe Windows GUI backend
+        if: runner.os == 'Windows'
+        run: >-
+          python -c "import webview; from webview.platforms import edgechromium, winforms;
+          print('Windows webview backend imports OK')"
+
+      - name: Upload desktop artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.plat }}
+          path: dist/aggps-studio-*.zip
+          if-no-files-found: error
+          retention-days: 7

@@ -1,0 +1,57 @@
+# Runtime and generated outputs
+_jobs/
+artifacts/
+output/
+salida/
+dist/
+build/
+THIRD_PARTY_NOTICES.txt
+*.spec.bak
+
+# Customer inputs and generated farm deliverables
+examples/
+AgGPS/
+Shapefile/
+*.zip
+*_AgGPS.zip
+*_Shapefile.zip
+*_Mapas_choferes.pdf
+*_Mapas_lotes.zip
+*_paquete_completo.zip
+LEAME.txt
+INDICE_CAMPOS.txt
+*.cn1
+*.pos
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+FieldLevel.xml
+WM_Applied.xml
+Boundary.*
+LineFeature.*
+SurveyPoints*
+
+# Python environments and caches
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local secrets and OS files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+.envrc
+secrets/
+.DS_Store
