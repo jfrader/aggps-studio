@@ -21,6 +21,7 @@ from pathlib import Path
 import pytest
 
 import build_desktop
+from version import APP_VERSION
 
 
 def _find_current_zip() -> Path:
@@ -37,6 +38,22 @@ def _find_current_zip() -> Path:
 
 def _is_windows_zip(zp: Path) -> bool:
     return "windows" in zp.name
+
+
+def test_linux_spec_excludes_build_host_system_libraries() -> None:
+    spec = Path("aggps_studio.spec").read_text(encoding="utf-8")
+
+    assert 'if sys.platform.startswith("linux"):' in spec
+    assert "a.exclude_system_libraries()" in spec
+
+
+def test_project_metadata_matches_application_version() -> None:
+    import tomllib
+
+    project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]
+
+    assert project["version"] == APP_VERSION
+
 
 def test_desktop_zip_has_exactly_one_app_folder() -> None:
     zp = _find_current_zip()
@@ -63,6 +80,15 @@ def test_desktop_zip_executable_and_resources() -> None:
         assert "AgGPS Studio/LICENSE.txt" in nl
         assert "AgGPS Studio/THIRD_PARTY_NOTICES.txt" in nl
         assert z.getinfo("AgGPS Studio/THIRD_PARTY_NOTICES.txt").file_size >= 1_000
+
+
+def test_linux_zip_uses_one_host_gui_library_stack() -> None:
+    zp = _find_current_zip()
+    if _is_windows_zip(zp):
+        pytest.skip("Linux host-library contract only applies to the Linux bundle")
+
+    with zipfile.ZipFile(zp) as z:
+        build_desktop._validate_linux_host_libraries(z.namelist())
 
 
 def test_notice_generator_uses_piplicenses_embedded_text_options(

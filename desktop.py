@@ -194,6 +194,11 @@ def _handle_missing_webview(exc: Exception) -> None:
     raise RuntimeError(f"pywebview unavailable: {exc}\n{hint}") from None
 
 
+def _native_webview_gui() -> str | None:
+    """Use the only Linux backend shipped and documented by this bundle."""
+    return "gtk" if sys.platform.startswith("linux") else None
+
+
 def _run_smoke_test() -> None:
     """Start desktop-mode server on ephemeral prebound port, verify healthz + authenticated session, clean shutdown. No GUI."""
     _ensure_mpl_and_dirs()
@@ -267,7 +272,7 @@ def _run_gui_smoke_test() -> None:
 
             # start blocks until destroy() or external quit
             try:
-                webview.start(_close_after_start)
+                webview.start(_close_after_start, gui=_native_webview_gui())
             except Exception as exc:
                 _handle_missing_webview(exc)
 
@@ -316,7 +321,7 @@ def _run_desktop() -> None:
                 height=720,
                 resizable=True,
             )
-            webview.start()
+            webview.start(gui=_native_webview_gui())
     except Exception as exc:
         # webview.start() can raise for missing native runtime (e.g. GTK/WebKit)
         _handle_missing_webview(exc)

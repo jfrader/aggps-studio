@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1
+
+### Fixed
+
+- Linux desktop bundles now use host-provided GTK, GLib, fontconfig, and WebKitGTK shared libraries instead of mixing Ubuntu build libraries with host libraries.
+
 ## 0.4.0
 
 ### Added

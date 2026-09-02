@@ -31,6 +31,36 @@ from pathlib import Path
 
 
 THIRD_PARTY_NOTICES_FILENAME = "THIRD_PARTY_NOTICES.txt"
+LINUX_HOST_GUI_LIBRARIES = {
+    "libatk-1.0.so.0",
+    "libatk-bridge-2.0.so.0",
+    "libatspi.so.0",
+    "libcairo-gobject.so.2",
+    "libcairo.so.2",
+    "libepoxy.so.0",
+    "libffi.so.8",
+    "libfontconfig.so.1",
+    "libfreetype.so.6",
+    "libfribidi.so.0",
+    "libgdk-3.so.0",
+    "libgdk_pixbuf-2.0.so.0",
+    "libgio-2.0.so.0",
+    "libgirepository-1.0.so.1",
+    "libglib-2.0.so.0",
+    "libgmodule-2.0.so.0",
+    "libgobject-2.0.so.0",
+    "libgraphite2.so.3",
+    "libgtk-3.so.0",
+    "libharfbuzz-gobject.so.0",
+    "libharfbuzz.so.0",
+    "libjavascriptcoregtk-4.1.so.0",
+    "libpango-1.0.so.0",
+    "libpangocairo-1.0.so.0",
+    "libpangoft2-1.0.so.0",
+    "libpixman-1.so.0",
+    "libsecret-1.so.0",
+    "libwebkit2gtk-4.1.so.0",
+}
 REQUIRED_NOTICE_PACKAGES = {
     "fastapi",
     "itsdangerous",
@@ -51,7 +81,7 @@ def _get_version() -> str:
     for raw in vp.read_text(encoding="utf-8").splitlines():
         line = raw.strip()
         if line.startswith("APP_VERSION"):
-            # APP_VERSION = "0.4.0"
+            # APP_VERSION = "0.4.1"
             val = line.split("=", 1)[1].strip()
             return val.strip("\"' ")
     raise RuntimeError("APP_VERSION not found in version.py")
@@ -96,6 +126,17 @@ def _validate_third_party_notices(notices_path: Path) -> None:
         raise RuntimeError(
             "third-party notices are missing bundled runtime packages: "
             + ", ".join(missing)
+        )
+
+
+def _validate_linux_host_libraries(member_names: list[str]) -> None:
+    """Reject distro GUI libraries that would override the target host stack."""
+    bundled_names = {Path(name).name for name in member_names}
+    conflicts = sorted(LINUX_HOST_GUI_LIBRARIES & bundled_names)
+    if conflicts:
+        raise RuntimeError(
+            "Linux bundle contains host-provided GUI libraries: "
+            + ", ".join(conflicts)
         )
 
 
@@ -187,9 +228,12 @@ LINUX RUNTIME CAVEAT
 This bundle is portable application files. It does NOT bundle host GTK/WebKit
 shared libraries. The embedded browser (pywebview) requires system WebKitGTK + GTK.
 
-Exact supported command (Ubuntu 24.04+ / Debian testing+):
+Ubuntu 24.04+ / Debian testing+:
   sudo apt-get update
   sudo apt-get install -y gir1.2-webkit2-4.1 libwebkit2gtk-4.1-0 gir1.2-gtk-3.0
+
+Arch Linux:
+  sudo pacman -S --needed webkit2gtk-4.1 gtk3
 
 Do NOT run on systems without these packages; the GUI will fail with a clear
 message containing the install hint. Satellite and PDF features work headless.
@@ -270,6 +314,8 @@ See AGENTS.md and README.md for details.
         ]
         bad = [n for n in nl if any(fs in n for fs in forbidden_substr)]
         assert not bad, f"forbidden content found in runtime zip: {bad[:5]}"
+        if plat == "linux-x64":
+            _validate_linux_host_libraries(nl)
 
     # Contract for CI: copy the finalized onedir bundle to repository dist/AgGPS Studio/
     # (alongside the ZIP). PyInstaller intermediates stay in platform temp dir.
@@ -298,6 +344,10 @@ See AGENTS.md and README.md for details.
         if p.is_file():
             rp = str(p.relative_to(final_bundle_dir))
             assert not any(fs in rp for fs in ["jobs/", "_jobs/", ".git/", "tests/"]), f"forbidden in final bundle: {rp}"
+    if plat == "linux-x64":
+        _validate_linux_host_libraries(
+            [str(p.relative_to(final_bundle_dir)) for p in final_bundle_dir.rglob("*") if p.is_file()]
+        )
 
     print(f"[build] OK: {zip_path} ({zip_path.stat().st_size} bytes) + bundle at {final_bundle_dir}")
     # tmp_base left for inspection; CI can clean workspace
@@ -308,7 +358,7 @@ def _verify_bundle() -> None:
     """Cross-platform stdlib verification of the finalized repo dist/ bundle.
     - Locates dist/AgGPS Studio/ onedir (the one copied by build for CI contract)
     - Runs the packaged executable --version and --smoke-test from a *clean* temp cwd, passing AGGPS_DESKTOP_VERIFY_DIR
-    - Asserts exact marker files written only to the verify dir (== "0.4.0", "OK"); no litter in caller cwd
+    - Asserts exact version and smoke markers in the verify dir; no litter in caller cwd
     - Asserts exit codes == 0 (no || true fallbacks)
     - Performs ZIP member inspection for exactly one top-level folder, exe, templates/static, no forbidden content
     - Also sanity checks the onedir bundle itself
@@ -409,6 +459,8 @@ def _verify_bundle() -> None:
         bad = [n for n in nl if any(f in n for f in forbidden)]
         if bad:
             raise AssertionError(f"forbidden content in ZIP: {bad[:3]}")
+        if "linux" in zp.name:
+            _validate_linux_host_libraries(nl)
 
     # also assert the onedir bundle dir has the resources (for the copied final layout)
     if not ( (bundle_dir / "templates" / "index.html").exists() or (bundle_dir / "_internal" / "templates" / "index.html").exists() ):

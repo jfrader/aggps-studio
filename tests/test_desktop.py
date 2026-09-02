@@ -82,6 +82,14 @@ def _has_uvicorn() -> bool:
         return False
 
 
+def test_linux_desktop_forces_gtk_backend(monkeypatch: pytest.MonkeyPatch) -> None:
+    import desktop
+
+    monkeypatch.setattr(desktop.sys, "platform", "linux")
+
+    assert desktop._native_webview_gui() == "gtk"
+
+
 @pytest.mark.skipif(not _has_uvicorn(), reason="uvicorn not available for server lifecycle test")
 def test_desktop_server_lifecycle(tmp_path: Path):
     """Uses the reusable DesktopServer context manager.
