@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import secrets
 import socket
 import sys
@@ -35,12 +36,18 @@ import platformdirs
 from version import APP_VERSION
 
 
+_SENSITIVE_EXCEPTION_VALUE_RE = re.compile(
+    r"(?i)\b(password|passphrase|secret|token|api[_-]?key|authorization)"
+    r"(\s*[:=]\s*)([^\s,;]+)"
+)
+
+
 def _write_ci_marker(name: str, content: str) -> None:
     """Write a sidecar marker file ONLY when AGGPS_DESKTOP_VERIFY_DIR is set.
-    Used exclusively by `python build_desktop.py --verify` (points the env at its
-    temp cwd) so that normal users and ordinary runs never create .aggps-* litter
-    in the current working directory. Windowed frozen builds may suppress stdout,
-    hence the marker sidecar for verification only.
+    Used exclusively by frozen-bundle verification (which points the env at a
+    temp directory) so that normal users and ordinary runs never create .aggps-*
+    litter in the current working directory. Windowed frozen builds may suppress
+    stdout, hence the marker sidecar for verification only.
     """
     verify_dir = os.environ.get("AGGPS_DESKTOP_VERIFY_DIR")
     if not verify_dir:
@@ -49,6 +56,19 @@ def _write_ci_marker(name: str, content: str) -> None:
         (Path(verify_dir) / name).write_text(content + "\n", encoding="utf-8")
     except Exception:
         pass
+
+
+def _concise_exception_summary(exc: Exception) -> str:
+    """Return a single-line diagnostic without common credential values."""
+    try:
+        message = " ".join(str(exc).split()) or "<no message>"
+    except Exception:
+        message = "<unprintable message>"
+    message = _SENSITIVE_EXCEPTION_VALUE_RE.sub(r"\1\2<redacted>", message)
+    message = re.sub(r"(?i)\bbearer\s+\S+", "Bearer <redacted>", message)
+    if len(message) > 500:
+        message = message[:497] + "..."
+    return f"{type(exc).__name__}: {message}"
 
 
 def _ensure_mpl_and_dirs() -> tuple[Path, Path]:
@@ -256,6 +276,18 @@ def _run_gui_smoke_test() -> None:
     _write_ci_marker(".aggps-gui-smoke-ok", "OK")
 
 
+def _run_gui_smoke_test_with_diagnostics() -> int:
+    """Run the GUI smoke probe and persist a frozen-build failure diagnostic."""
+    try:
+        _run_gui_smoke_test()
+    except Exception as exc:
+        summary = _concise_exception_summary(exc)
+        _write_ci_marker(".aggps-gui-smoke-error", summary)
+        print(f"desktop-gui-smoke: ERROR: {summary}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def _run_desktop() -> None:
     jobs_dir, _ = _ensure_mpl_and_dirs()
 
@@ -306,15 +338,14 @@ def main() -> None:
         _write_ci_marker(".aggps-version", APP_VERSION)
         return
 
-    # Ensure dirs/MPL before any later imports that may pull engine/matplotlib.
-    _ensure_mpl_and_dirs()
-
     if args.smoke_test:
         _run_smoke_test()
         return
 
     if args.gui_smoke_test:
-        _run_gui_smoke_test()
+        exit_code = _run_gui_smoke_test_with_diagnostics()
+        if exit_code:
+            sys.exit(exit_code)
         return
 
     try:

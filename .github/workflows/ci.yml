@@ -86,11 +86,42 @@ jobs:
             timeout --signal=TERM 20s \
             "./dist/AgGPS Studio/AgGPS Studio" --gui-smoke-test
 
-      - name: Probe Windows GUI backend
+      - name: Run Windows GUI smoke
         if: runner.os == 'Windows'
-        run: >-
-          python -c "import webview; from webview.platforms import edgechromium, winforms;
-          print('Windows webview backend imports OK')"
+        shell: pwsh
+        run: |
+          $exe = Join-Path $env:GITHUB_WORKSPACE "dist\AgGPS Studio\AgGPS Studio.exe"
+          if (-not (Test-Path -LiteralPath $exe)) {
+            throw "Packaged Windows executable not found: $exe"
+          }
+
+          $verifyDir = Join-Path $env:RUNNER_TEMP ("aggps-gui-smoke-" + [guid]::NewGuid().ToString("N"))
+          New-Item -ItemType Directory -Path $verifyDir | Out-Null
+          $successMarker = Join-Path $verifyDir ".aggps-gui-smoke-ok"
+          $errorMarker = Join-Path $verifyDir ".aggps-gui-smoke-error"
+          $env:AGGPS_DESKTOP_VERIFY_DIR = $verifyDir
+          try {
+            $process = Start-Process -FilePath $exe -ArgumentList "--gui-smoke-test" -Wait -PassThru
+            $exitCode = $process.ExitCode
+            if ($exitCode -ne 0) {
+              if (Test-Path -LiteralPath $errorMarker) {
+                $errorText = (Get-Content -LiteralPath $errorMarker -Raw).Trim()
+                Write-Host "Windows GUI smoke diagnostic: $errorText"
+              } else {
+                Write-Host "Windows GUI smoke diagnostic marker was not created."
+              }
+              throw "Windows GUI smoke test failed with exit code $exitCode"
+            }
+            if (-not (Test-Path -LiteralPath $successMarker)) {
+              throw "Windows GUI smoke test exited 0 without a success marker."
+            }
+            $successText = (Get-Content -LiteralPath $successMarker -Raw).Trim()
+            if ($successText -ne "OK") {
+              throw "Windows GUI smoke success marker was invalid: $successText"
+            }
+          } finally {
+            Remove-Item Env:\AGGPS_DESKTOP_VERIFY_DIR -ErrorAction SilentlyContinue
+          }
 
       - name: Upload desktop artifact
         uses: actions/upload-artifact@v4
