@@ -195,9 +195,9 @@ def _handle_missing_webview(exc: Exception) -> None:
 
 
 def _native_webview_gui() -> str | None:
-    """Use GTK over X11 on Linux to avoid cross-distro Wayland protocol failures."""
+    """Use native GTK while avoiding WebKitGTK's unreliable DMA-BUF renderer."""
     if sys.platform.startswith("linux"):
-        os.environ["GDK_BACKEND"] = "x11"
+        os.environ.setdefault("WEBKIT_DISABLE_DMABUF_RENDERER", "1")
         return "gtk"
     return None
 

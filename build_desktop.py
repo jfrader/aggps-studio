@@ -81,7 +81,7 @@ def _get_version() -> str:
     for raw in vp.read_text(encoding="utf-8").splitlines():
         line = raw.strip()
         if line.startswith("APP_VERSION"):
-            # APP_VERSION = "0.4.2"
+            # APP_VERSION = "0.4.3"
             val = line.split("=", 1)[1].strip()
             return val.strip("\"' ")
     raise RuntimeError("APP_VERSION not found in version.py")
@@ -230,12 +230,12 @@ shared libraries. The embedded browser (pywebview) requires system WebKitGTK + G
 
 Ubuntu 24.04+ / Debian testing+:
   sudo apt-get update
-  sudo apt-get install -y gir1.2-webkit2-4.1 libwebkit2gtk-4.1-0 gir1.2-gtk-3.0 xwayland
+  sudo apt-get install -y gir1.2-webkit2-4.1 libwebkit2gtk-4.1-0 gir1.2-gtk-3.0
 
 Arch Linux:
-  sudo pacman -S --needed webkit2gtk-4.1 gtk3 xorg-xwayland
+  sudo pacman -S --needed webkit2gtk-4.1 gtk3
 
-The launcher uses GTK's X11 backend. Wayland desktops require XWayland.
+The launcher follows the desktop's native GTK backend and supports Wayland and X11.
 
 Do NOT run on systems without these packages; the GUI will fail with a clear
 message containing the install hint. Satellite and PDF features work headless.
