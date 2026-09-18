@@ -1,5 +1,8 @@
 # AgGPS Studio
 
+[![ci](https://img.shields.io/github/actions/workflow/status/jfrader/aggps-studio/ci.yml?branch=main&style=flat&label=ci)](https://github.com/jfrader/aggps-studio/actions)
+[![license](https://img.shields.io/github/license/jfrader/aggps-studio?style=flat)](./LICENSE)
+
 English | [Español](README.es.md) | [Português (Brasil)](README.pt-BR.md)
 
 Upload a Trimble **AgGPS.zip** and download:
